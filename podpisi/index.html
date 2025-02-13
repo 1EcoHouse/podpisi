@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Петиция</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="email"] { width: 100%; padding: 8px; }
+        .error { color: red; margin-top: 5px; }
+        #signers-list { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+        .signer-item { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Подписать петицию</h1>
+        <form id="petitionForm">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" required>
+                <div class="error" id="emailError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Никнейм:</label>
+                <input type="text" id="nickname" required>
+                <div class="error" id="nicknameError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="agree" required>
+                    Нажимая на галочку, вы соглашаетесь с 
+                    <a href="Uslovie.docx" target="_blank">условиями использования сайта</a>
+                </label>
+            </div>
+            
+            <button type="submit">Подписать петицию</button>
+        </form>
+
+        <div id="signers-list">
+            <h2>Уже подписали:</h2>
+            <div id="signers"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('petitionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const nickname = document.getElementById('nickname').value;
+            const agree = document.getElementById('agree').checked;
+
+            // Очистка ошибок
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+            
+            fetch('submit.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    nickname: nickname,
+                    agree: agree
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Спасибо за подпись!');
+                    updateSignersList(data.signers);
+                    document.getElementById('petitionForm').reset();
+                } else {
+                    if (data.errors.email) {
+                        document.getElementById('emailError').textContent = data.errors.email;
+                    }
+                    if (data.errors.nickname) {
+                        document.getElementById('nicknameError').textContent = data.errors.nickname;
+                    }
+                }
+            });
+        });
+
+        function updateSignersList(signers) {
+            const container = document.getElementById('signers');
+            container.innerHTML = signers.map(s => 
+                `<div class="signer-item">${s.nickname}</div>`
+            ).join('');
+        }
+
+        // Загрузка подписавших при загрузке страницы
+        fetch('get_signers.php')
+            .then(response => response.json())
+            .then(data => updateSignersList(data));
+    </script>
+</body>
+</html>
