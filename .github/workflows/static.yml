@@ -1,0 +1,31 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Или другая основная ветка
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install  # Только если у тебя есть package.json (можно убрать)
+
+      - name: Build project (если нужно)
+        run: npm run build  # Если у тебя есть процесс билда (иначе убери)
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages  # Ветка, в которую деплоим
+          folder: .  # Каталог с HTML-файлами (если есть `build`, то `build`)
